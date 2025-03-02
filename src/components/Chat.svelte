@@ -1,17 +1,19 @@
 <script>
     import FriendList from "./FriendList.svelte";
     import Message from "./Message.svelte";
+    const ws = new WebSocket("ws://localhost:3030/ws");
 
+    let myip = '';
     let friends = [
         { name: "公共频道", online: true },
         { name: "李扬天佑", online: false },
-        { name: "秦艺格", online: true },
-        { name: "郑思念", online: false },
+        { name: "章鱼红", online: true },
+        { name: "外国人", online: false },
         { name: "无名氏", online: true },
     ];
 
     let messages = $state([
-        { nickname: "李扬天佑", content: "你好", isMe: false },
+        { nickname: "李扬天佑", content: "系兄弟就来砍我", isMe: false },
         { nickname: "我", content: "道士十五狗，全区横着走", isMe: true },
     ]);
 
@@ -31,13 +33,21 @@
 
     function sendMessage() {
         if (textareaValue.trim()) {
-            messages = [
-                ...messages,
-                { nickname: "我", content: textareaValue, isMe: true },
-            ];
+            ws.send(JSON.stringify({ toip: "public", message: textareaValue }));
             textareaValue = "";
         }
     }
+    ws.onmessage = (event) => {
+        let mes = JSON.parse(event.data);
+        if (mes?.type == "online") {
+            myip = mes.myip;
+        } else {
+            messages = [
+                ...messages,
+                { nickname: mes.fromip, content: mes.message, isMe: (myip == mes.fromip) }, 
+            ];
+        }
+    };
 </script>
 
 <div class="chat-main">
